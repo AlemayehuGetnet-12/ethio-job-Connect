@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "cd frontend && npm install --no-audit --no-fund && npx next dev -p 8080 -H 0.0.0.0",
-    "build": "cd frontend && npm install --no-audit --no-fund && npx next build"
+    "build": "cd frontend && npm install --no-audit --no-fund && npx next build",
+    "build:dev": "cd frontend && npm install --no-audit --no-fund && npx next build"
   }
 }
