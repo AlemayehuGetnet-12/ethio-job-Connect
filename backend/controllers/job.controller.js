@@ -2,6 +2,9 @@ import Job from "../models/Job.js";
 import { botInstance } from '../telegram/bot.js';
 import TelegramSubscription from '../models/TelegramSubscription.js';
 
+const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Public: GET /api/jobs?search|q=&city|location=&category=&type=&isRemote=&salaryMin=&salaryMax=&sort=&page=&limit=
 export const listJobs = async (req, res, next) => {
   try {
     // pagination & filtering
@@ -11,14 +14,31 @@ export const listJobs = async (req, res, next) => {
 
     const q = { isActive: true };
 
-    if (req.query.search) {
-      const re = new RegExp(req.query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      q.$or = [{ title: re }, { description: re }, { company: re }];
+    // only show jobs whose deadline hasn't passed
+    const andClauses = [{ $or: [{ deadline: { $exists: false } }, { deadline: null }, { deadline: { $gte: new Date() } }] }];
+
+    const keyword = (req.query.search || req.query.q || '').toString().trim().slice(0, 100);
+    if (keyword) {
+      const re = new RegExp(escapeRe(keyword), 'i');
+      const companies = await Company.find({ name: re }).select('_id').limit(50);
+      const or = [{ title: re }, { description: re }, { skills: re }, { category: re }];
+      if (companies.length) or.push({ company: { $in: companies.map(c => c._id) } });
+      andClauses.push({ $or: or });
     }
-    if (req.query.location) q.location = req.query.location;
-    if (req.query.category) q.category = req.query.category;
+
+    const city = (req.query.city || req.query.location || '').toString().trim().slice(0, 60);
+    if (city) {
+      // match "Adama" against "Adama (Nazret)" etc.
+      const base = city.split('(')[0].trim();
+      q.location = new RegExp(escapeRe(base), 'i');
+    }
+
+    const category = (req.query.category || '').toString().trim().slice(0, 60);
+    if (category) q.category = new RegExp(`^${escapeRe(category)}$`, 'i');
+
     if (req.query.type) q.type = req.query.type;
     if (req.query.isRemote) q.isRemote = req.query.isRemote === 'true';
+    q.$and = andClauses;
 
     // salary range
     const salaryMin = req.query.salaryMin ? Number(req.query.salaryMin) : null;
