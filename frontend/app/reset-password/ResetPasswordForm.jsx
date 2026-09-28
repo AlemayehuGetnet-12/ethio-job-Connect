@@ -30,7 +30,7 @@ export default function ResetPasswordForm() {
   const [simulateEnabled, setSimulateEnabled] = useState(isDev);
   const DEV_TOKEN = "__dev_local_token__";
   const token = tokenFromQuery ?? (isDev && simulateEnabled ? DEV_TOKEN : null);
-n  const {
+const {
     register,
     handleSubmit,
     formState: { errors },
