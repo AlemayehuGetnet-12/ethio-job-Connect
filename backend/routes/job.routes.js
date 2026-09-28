@@ -1,10 +1,11 @@
 import express from "express";
-import { listJobs, getJob, createJob, updateJob, deleteJob, recommendJobs } from "../controllers/job.controller.js";
+import { getJobFilters, listJobs, getJob, createJob, updateJob, deleteJob, recommendJobs } from "../controllers/job.controller.js";
 import { protect, authorizeRoles } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 router.get("/", listJobs);
+router.get("/filters", getJobFilters);
 router.get('/recommendations', protect, recommendJobs);
 router.get("/:id", getJob);
 router.post("/", protect, authorizeRoles("employer", "admin"), createJob);
