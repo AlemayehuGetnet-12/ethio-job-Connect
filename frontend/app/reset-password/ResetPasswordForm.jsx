@@ -24,29 +24,34 @@ export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tokenFromQuery = searchParams.get("token");
-n  // Allow rendering the form in development even if the token is missing.
+
+  // Allow rendering the form in development even if the token is missing.
   // Use a fake local token to simulate the flow without contacting the backend.
   const isDev = process.env.NODE_ENV === "development";
   const [simulateEnabled, setSimulateEnabled] = useState(isDev);
   const DEV_TOKEN = "__dev_local_token__";
   const token = tokenFromQuery ?? (isDev && simulateEnabled ? DEV_TOKEN : null);
-const {
+
+  const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({ resolver: zodResolver(schema) });
-n  useEffect(() => {
+
+  useEffect(() => {
     if (!tokenFromQuery && !isDev) {
       setError("Invalid or missing reset token.");
     } else {
       setError(null);
     }
   }, [tokenFromQuery, isDev]);
-n  const onSubmit = async (data) => {
+
+  const onSubmit = async (data) => {
     setLoading(true);
     setError(null);
     setStatus(null);
-n    // If running locally in dev and using the fake token, simulate success without calling the API.
+
+    // If running locally in dev and using the fake token, simulate success without calling the API.
     if (token === "__dev_local_token__") {
       // short simulated delay for UX
       setTimeout(() => {
@@ -56,12 +61,14 @@ export default function ResetPasswordForm() {
       }, 600);
       return;
     }
-n    if (!token) {
+
+    if (!token) {
       setError("Invalid or missing reset token.");
       setLoading(false);
       return;
     }
-n    try {
+
+    try {
       await axios.post(getApiUrl(`/api/auth/reset-password?token=${encodeURIComponent(token)}`), {
         password: data.password,
       });
